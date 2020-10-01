@@ -73,10 +73,12 @@ ghc-options:
 dependencies:
   - base >= 4.9 && < 5
   - parsec >= 3.1 && < 4
+  - text >= 1.2 && < 1.3
 
 library:
   source-dirs: src
   exposed-modules:
+    - Prelude
     - Language.VFDL
   dependencies:
     - name: base
@@ -136,6 +138,7 @@ library:
         - (RIO.Vector.Unboxed.Unsafe    as Prelude.Vector.Unboxed.Unsafe)
         - (RIO.Vector.Unsafe            as Prelude.Vector.Unsafe)
         - (RIO.Writer                   as Prelude.Writer)
+    - aeson >= 1.5 && < 1.6
 
 executables:
   vfdlc:
@@ -149,5 +152,6 @@ executables:
         version: ">= 0.1  && <0.2"
         mixin: *rio-mixin
       - vfdl
+      - cabal-file-th >= 0.2 && <0.3
 
 # vim: nospell
