@@ -3,6 +3,9 @@ module Language.VFDL.AST
     , PortDirection(..)
     , Port(..)
     , Factory(..)
+    , Operation(..)
+    , Statement(..)
+    , Architecture(..)
     ) where
 
 data AST = AST
@@ -12,12 +15,30 @@ data PortDirection = In | Out
 
 
 data Port = Port
-          { portIdentifier :: String
-          , portDirection :: PortDirection
-          , portType :: String
-          } deriving (Eq, Show)
+    { portIdentifier :: Text
+    , portDirection :: PortDirection
+    , portType :: Text
+    } deriving (Eq, Show)
 
 data Factory = Factory
-             { facIdentifier :: String
-             , facPorts :: Maybe [Port]
-             } deriving (Eq, Show)
+    { facIdentifier :: Text
+    , facPorts :: Maybe [Port]
+    } deriving (Eq, Show)
+
+data Operation
+    = FunctionCall { name :: Text
+                   , parameter :: [Text]
+                   }
+    | Split Text Text
+    | Combine Text Text
+    deriving (Eq, Show)
+
+data Statement = Statement
+    { output :: Text
+    , operation :: Operation
+    } deriving (Eq, Show)
+
+data Architecture = Architecture
+    { archIdentifier :: Text
+    , archStatements :: [Statement]
+    } deriving (Eq, Show)

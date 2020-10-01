@@ -7,29 +7,19 @@ module Language.VFDL.TLR
 import Data.Text (unpack)
 import Data.Aeson
 
+-- Tile level representation
+-- at this abstraction level we already know exactly what tiles are going to an entity on top
+-- of them and which one it's going to be.
+
 -- Position of an Entity or Tile relative to the middle of the blueprint
 data Position = Position Float Float
     deriving (Eq, Ord, Show)
 
-instance FromJSON Position where
-    parseJSON = withObject "Position" $ \v -> Position
-        <$> v .: "x"
-        <*> v .: "y"
-instance ToJSON Position where
-    toJSON (Position x y) = object [ "x" .= x, "y" .= y ]
-
+-- Used for entities that can be different types such as underground belts or loaders
 data EntityType = Input | Output
     deriving (Eq, Show)
 
-instance FromJSON EntityType where
-    parseJSON = withText "Entity Type" $ \case
-        "input" -> return Input
-        "output" -> return Output
-        n -> fail $ unpack $ (n <> " is not a valid entity type")
-instance ToJSON EntityType where
-    toJSON Input = "input"
-    toJSON Output = "output"
-
+-- An Entity is the main object in a blueprint, providing all the functionality
 data Entity 
     = Entity
     { entityNumber :: Integer
@@ -41,6 +31,24 @@ data Entity
     , entityDropPosition :: Maybe Position
     , entityPickupPosition :: Maybe Position
     } deriving (Eq, Show)
+
+
+instance FromJSON EntityType where
+    parseJSON = withText "Entity Type" $ \case
+        "input" -> return Input
+        "output" -> return Output
+        n -> fail $ unpack $ (n <> " is not a valid entity type")
+instance ToJSON EntityType where
+    toJSON Input = "input"
+    toJSON Output = "output"
+
+instance FromJSON Position where
+    parseJSON = withObject "Position" $ \v -> Position
+        <$> v .: "x"
+        <*> v .: "y"
+instance ToJSON Position where
+    toJSON (Position x y) = object [ "x" .= x, "y" .= y ]
+
 
 instance FromJSON Entity where
     parseJSON = withObject "Entity" $ \v -> Entity
@@ -63,3 +71,4 @@ instance ToJSON Entity where
         , "drop_position" .= droppos
         , "pickup_position" .= pickpos
         ]
+

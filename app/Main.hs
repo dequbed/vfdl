@@ -15,4 +15,6 @@ testdef =
     \END FACTORY test;"
 
 main :: IO ()
-main = hPutStrLn stdout $ unpack banner
+main = do
+    hPutStrLn stdout $ unpack banner
+    hPutStrLn stdout $ show $ testdef
