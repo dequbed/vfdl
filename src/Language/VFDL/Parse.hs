@@ -80,7 +80,7 @@ factory = do
     portM <- ports -- A port definition - optional if the factorio does no item I/O
     end ident
 
-    return $ Factory ident portM
+    return $ FactoryDeclaration ident portM
   where
     factorySym = symbol "FACTORY"
     end ident = do
@@ -97,37 +97,48 @@ tupleOrSingle = choice [ tuple, single ]
         return [a]
     tuple = parens $ P.commaSep lexer identifier
 
-concurrent :: ParsecT Text () Identity [Statement]
+concurrent :: ParsecT Text () Identity [ConcurrentStatement]
 concurrent = manyTill concurrent' (try $ symbol "END")
 
-concurrent' :: ParsecT Text () Identity Statement
+concurrent' :: ParsecT Text () Identity ConcurrentStatement
 concurrent' = do
     ident <- tupleOrSingle
     symbol "<="
-    op <- choice [balance, beltop, functionCall]
+    op <- choice [merge, process, balance]
     semi
-    return $ Statement ident op
+    return $ ConcurrentStatement ident op
   where
-    functionCall = try $ do
+    process= try $ do
         ident <- identifier
-        params <- parens $ P.commaSep lexer identifier
-        return $ FunctionCall ident params
-    balance = try $ Balance <$> tupleOrSingle
-    beltop = try $ do
+        params <- P.parens lexer $ P.commaSep lexer parameter
+        return $ CSProcessCall $ ProcessCall ident params
+    balance = try $ CSBalance <$> tupleOrSingle
+    merge = try $ do
         a <- identifier
         symbol "><"
         b <- identifier
-        return $ BeltOperation Merge a b
+        return $ CSOperator $ Merge a b
+    parameter = choice [(Quoted <$> pack <$> P.stringLiteral lexer), (Unquoted <$> identifier)]
+
+declarations = do
+    ident <- identifier
+    P.colon lexer
+    decl_type <- identifier
+    semi
+    return $ BCTransport $ TransportDeclaration [ident] (Scoped decl_type)
 
 architecture = do
     symbol "ARCHITECTURE"
     ident <- identifier
+    symbol "OF"
+    name <- identifier
     symbol "IS"
+    decls <- many declarations
     symbol "BEGIN"
     statements <- concurrent
     end ident
 
-    return $ Architecture ident statements
+    return $ ArchitectureBody ident name decls statements
   where
     end ident = do
         symbol $ unpack ident

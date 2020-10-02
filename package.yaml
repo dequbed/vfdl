@@ -138,10 +138,12 @@ library:
         - (RIO.Vector.Unboxed.Unsafe    as Prelude.Vector.Unboxed.Unsafe)
         - (RIO.Vector.Unsafe            as Prelude.Vector.Unsafe)
         - (RIO.Writer                   as Prelude.Writer)
+    - bytestring
+    - containers
+    - unordered-containers
     - aeson >= 1.5 && < 1.6
     - zlib >= 0.6 && < 0.7
     - base64 >= 0.4 && <0.5
-    - bytestring
 
 executables:
   vfdlc:
