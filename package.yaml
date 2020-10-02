@@ -153,5 +153,6 @@ executables:
         mixin: *rio-mixin
       - vfdl
       - cabal-file-th >= 0.2 && <0.3
+      - optparse-applicative >= 0.16 && <0.17
 
 # vim: nospell

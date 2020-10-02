@@ -1,14 +1,21 @@
 module Language.VFDL.AST
-    ( AST
+    ( AST(..)
     , PortDirection(..)
     , Port(..)
     , Factory(..)
     , Operation(..)
+    , BOp(..)
     , Statement(..)
     , Architecture(..)
     ) where
 
-data AST = AST
+data AST = AST [Factory] [Architecture]
+    deriving (Eq, Show)
+
+instance Semigroup AST where
+    (AST f a) <> (AST g b) = AST (f<>g) (a<>b)
+instance Monoid AST where
+    mempty = AST [] []
 
 data PortDirection = In | Out
     deriving (Eq, Show)
@@ -25,16 +32,19 @@ data Factory = Factory
     , facPorts :: Maybe [Port]
     } deriving (Eq, Show)
 
+data BOp = Merge
+    deriving (Eq, Show)
+
 data Operation
     = FunctionCall { name :: Text
                    , parameter :: [Text]
                    }
-    | Split Text Text
-    | Combine Text Text
+    | Balance [Text]
+    | BeltOperation BOp Text Text
     deriving (Eq, Show)
 
 data Statement = Statement
-    { output :: Text
+    { outputs :: [Text]
     , operation :: Operation
     } deriving (Eq, Show)
 

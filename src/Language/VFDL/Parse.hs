@@ -2,7 +2,7 @@ module Language.VFDL.Parse
     ( parseVFDL
     ) where
 
-import Prelude hiding ((<|>), many)
+import Prelude hiding ((<|>), many, try)
 import Data.Text (Text, pack, unpack)
 
 import Text.Parsec
@@ -56,10 +56,10 @@ parsePortDirection = choice [port_in, port_out]
         symbol "OUT"
         return Out
 
-port :: ParsecT Text () Identity Port
+port :: ParsecT Text () Identity [Port]
 port = do
     symbol "PORT"
-    p <- (P.parens lexer) $ do
+    p <- (P.parens lexer) $ many1 $ do
         pident <- identifier
         P.colon lexer
         pdir <- parsePortDirection
@@ -70,7 +70,7 @@ port = do
     return p
 
 ports :: ParsecT Text () Identity (Maybe [Port])
-ports = optionMaybe $ many1 $ port
+ports = optionMaybe $ port
 
 -- Parse a 'FACTORY' statement
 factory = do
@@ -89,43 +89,55 @@ factory = do
         symbol $ unpack ident
         semi
 
-concurrent = many $ do
-    ident <- identifier
+tupleOrSingle :: ParsecT Text () Identity [Text]
+tupleOrSingle = choice [ tuple, single ]
+  where
+    single = do
+        a <- identifier
+        return [a]
+    tuple = parens $ P.commaSep lexer identifier
+
+concurrent :: ParsecT Text () Identity [Statement]
+concurrent = manyTill concurrent' (try $ symbol "END")
+
+concurrent' :: ParsecT Text () Identity Statement
+concurrent' = do
+    ident <- tupleOrSingle
     symbol "<="
-    op <- choice [functionCall, split, combine]
+    op <- choice [balance, beltop, functionCall]
     semi
     return $ Statement ident op
   where
-    functionCall = do
+    functionCall = try $ do
         ident <- identifier
-        params <- parens $ many1 identifier
+        params <- parens $ P.commaSep lexer identifier
         return $ FunctionCall ident params
-    split = do
+    balance = try $ Balance <$> tupleOrSingle
+    beltop = try $ do
         a <- identifier
-        symbol "|"
+        symbol "><"
         b <- identifier
-        return $ Split a b
-    combine = do
-        a <- identifier
-        symbol "&"
-        b <- identifier
-        return $ Combine a b
+        return $ BeltOperation Merge a b
 
 architecture = do
-    symbol "architecture"
+    symbol "ARCHITECTURE"
     ident <- identifier
     symbol "IS"
-    symbol "begin"
+    symbol "BEGIN"
     statements <- concurrent
     end ident
 
     return $ Architecture ident statements
   where
     end ident = do
-        symbol "END"
         symbol $ unpack ident
         semi
 
+defs = do
+    s <- many $ choice [ (Left <$> factory), (Right <$> architecture) ]
+    return $ foldl' (\(AST fs as) new -> case new of
+        (Left f) -> AST (fs ++ [f]) as
+        (Right a) -> AST fs (as ++ [a])) (AST [] []) s
 
-parseVFDL :: SourceName -> Text -> Either ParseError Factory
-parseVFDL = parse factory
+parseVFDL :: SourceName -> Text -> Either ParseError AST
+parseVFDL = parse defs
