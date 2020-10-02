@@ -136,7 +136,7 @@ architecture = do
     decls <- many declarations
     symbol "BEGIN"
     statements <- concurrent
-    end ident
+    end name
 
     return $ ArchitectureBody ident name decls statements
   where
