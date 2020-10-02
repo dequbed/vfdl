@@ -10,7 +10,6 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.ByteString.Lazy as BL
 
 import Data.Aeson
-import Data.Aeson.Text (encodeToLazyText)
 
 import Codec.Compression.Zlib (compress)
 import Data.ByteString.Lazy.Base64 (encodeBase64)
@@ -72,10 +71,14 @@ instance ToJSON Blueprint where
         , "version" .= version
         ]
 
+-- |Generate the uncompressed unencoded JSON. This is not a valid blueprint as it but
+-- human-readable
 generateBlueprintJSON :: Text -> [Entity] -> BL.ByteString
 generateBlueprintJSON name ents = do
     encode $ Blueprint "blueprint" name Nothing ents [] 1
 
--- Generate the deflated, Base64-encoded blueprint string ready to be written to a file
+-- |Generate the final blueprint string ready to be written to a file
+--  This means the JSON is compressed using zlib-deflate, encoded as Base64 and prefixed
+--  with the version '0'
 generateBlueprint :: Text -> [Entity] -> TL.Text
-generateBlueprint n e = ("0" :: TL.Text) <> (encodeBase64 $ compress $ generateBlueprintJSON n e)
+generateBlueprint n e = "0" <> (encodeBase64 $ compress $ generateBlueprintJSON n e)

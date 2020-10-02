@@ -41,4 +41,3 @@ run (Param _ _ [f]) = do
     let ast = parseVFDL f c
     hPutStrLn stdout $ show ast
 run (Param _ _ _) = hPutStrLn stdout "You need to provide exactly one input file at the moment"
-
