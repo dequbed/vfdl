@@ -1,13 +1,19 @@
 module Language.VFDL.Generator
-    ( generateBlueprintJson
+    ( generateBlueprintJSON
+    , generateBlueprint
     ) where
 
 import Language.VFDL.TLR
 
 import qualified Data.Text.Lazy as TL
 
+import qualified Data.ByteString.Lazy as BL
+
 import Data.Aeson
 import Data.Aeson.Text (encodeToLazyText)
+
+import Codec.Compression.Zlib (compress)
+import Data.ByteString.Lazy.Base64 (encodeBase64)
 
 data Tile
     = Tile
@@ -66,6 +72,10 @@ instance ToJSON Blueprint where
         , "version" .= version
         ]
 
-generateBlueprintJson :: Text -> [Entity] -> TL.Text
-generateBlueprintJson name ents = do
-    encodeToLazyText $ Blueprint "blueprint" name Nothing ents [] 1
+generateBlueprintJSON :: Text -> [Entity] -> BL.ByteString
+generateBlueprintJSON name ents = do
+    encode $ Blueprint "blueprint" name Nothing ents [] 1
+
+-- Generate the deflated, Base64-encoded blueprint string ready to be written to a file
+generateBlueprint :: Text -> [Entity] -> TL.Text
+generateBlueprint n e = ("0" :: TL.Text) <> (encodeBase64 $ compress $ generateBlueprintJSON n e)
