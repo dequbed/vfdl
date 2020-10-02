@@ -1,0 +1,24 @@
+FACTORY circuits IS
+PORT (
+    copper : IN belt;
+    iron : IN belt;
+
+    OUT : OUT belt;
+)
+END FACTORY circuits;
+
+ARCHITECTURE behaviour OF circuits IS
+    Wire1 : belt;
+    Wire2 : belt;
+    Wire3 : belt;
+    C : belt;
+BEGIN
+    Wire1 <= crafterMk1(wire, copper);
+    Wire2 <= crafterMk1(wire, copper);
+    Wire3 <= crafterMk1(wire, copper);
+
+    C <= crafterMk1(circuits, Wire1, Wire2, iron);
+    C <= crafterMk1(circuits, Wire2, Wire3, iron);
+
+    OUT <= (C, C);
+END circuits;
