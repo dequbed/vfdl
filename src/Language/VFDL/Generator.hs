@@ -71,7 +71,7 @@ instance ToJSON Blueprint where
         , "version" .= version
         ]
 
--- |Generate the uncompressed unencoded JSON. This is not a valid blueprint as it but
+-- |Generate the uncompressed unencoded JSON. This is not a valid blueprint as is but
 -- human-readable
 generateBlueprintJSON :: Text -> [Entity] -> BL.ByteString
 generateBlueprintJSON name ents = do
