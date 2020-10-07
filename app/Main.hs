@@ -24,7 +24,7 @@ params = Param
         ( long "output"
         <> short 'o'
         <> metavar "FILE"
-        <> value "out.json"
+        <> value "a.out"
         <> help "Write output to FILE"
         )
     <*> many (argument str (metavar "FILE"))
@@ -38,8 +38,10 @@ run :: Param -> IO ()
 run (Param True _ _) = hPutStrLn stdout $ unpack banner
 run (Param _ _ [f]) = do
     c <- readFile f
+    {-
     case parseVFDL f c of
         Left e -> hPutStrLn stdout $ show e
         Right ast -> compile ast
+    -}
     testLayout
 run (Param _ _ _) = hPutStrLn stdout "You need to provide exactly one input file at the moment"

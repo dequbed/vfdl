@@ -145,6 +145,7 @@ library:
     - aeson >= 1.5 && < 1.6
     - zlib >= 0.6 && < 0.7
     - base64 >= 0.4 && <0.5
+    - matrix >= 0.3 && <0.4
 
 executables:
   vfdlc:
