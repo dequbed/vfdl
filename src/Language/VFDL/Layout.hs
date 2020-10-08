@@ -156,8 +156,8 @@ trivialConnect (Layout dim_a io_a m_a) (Layout dim_b io_b m_b) p = do
 
 conn_matrix :: Int -> Int -> PortKind -> PortKind -> Matrix (Maybe TileObj)
 conn_matrix n h (Grabber _) (Grabber _) =
-    let grabber = TileObj True $ Entity 0 "inserter" (Position 0 0) (Just 4) Nothing Nothing Nothing Nothing
-    in matrix n 1 (\case (x,y) | x == 1 && y == h -> Just grabber
+    let grabber = TileObj True $ Entity 0 "inserter" (Position 0 0) (Just 1) Nothing Nothing Nothing Nothing
+    in matrix n 1 (\case (x,y) | x == h && y == 1 -> Just grabber
                          _ -> Nothing)
 
 
