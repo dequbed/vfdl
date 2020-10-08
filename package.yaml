@@ -10,14 +10,14 @@ version: 0.0.1.0
 
 synopsis: A hardware description language for factorio factories
 
-description: See README at <https://github.com/dequbed/facdsl#readme>
+description: See README at <https://github.com/dequbed/vfdl#readme>
 
 license: GPL-3
 license-file: LICENSE
 
 author: Gregor Reitzenstein <me@dequbed.space>
 maintainer: Gregor Reitzenstein <me@dequbed.space>
-github: dequbed/fdl
+github: dequbed/vfdl
 
 category: Development
 
