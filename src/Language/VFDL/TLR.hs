@@ -22,7 +22,7 @@ data EntityType = Input | Output
 -- An Entity is the main object in a blueprint, providing all the functionality
 data Entity 
     = Entity
-    { entityNumber :: Integer
+    { entityNumber :: Int
     , entityName :: Text
     , entityPosition :: Position
     , entityDirection :: Maybe Integer
