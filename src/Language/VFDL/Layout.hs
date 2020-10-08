@@ -141,6 +141,9 @@ trivialConnect (Layout dim_a io_a m_a) (Layout dim_b io_b m_b) p = do
                 else new_ma <|> new_mb
 
         -- TODO unionWith here but that requires the rest to understand how to treat the list of ports!
+        -- TODO actually we have to completely modify the list to move the IO ports if the
+        -- underlying matrix moved.  I think instead I should just have a Matrix of complex tiles
+        -- that don't ever need to know their position because they are always valid there.
         Just $ Layout (nrows final_matrix, ncols final_matrix) (Map.union extra_ports_a extra_ports_b) final_matrix
 
     else if L.any (== LocBottom) sloc && L.any (== LocTop) dloc then do
