@@ -63,14 +63,16 @@ instance FromJSON Blueprint where
         <*> v .: "version"
 instance ToJSON Blueprint where
     toJSON (Blueprint item label colour entities tiles version) = object
-        [("blueprint", object
+        [("blueprint", object $
             [ "item" .= item
             , "label" .= label
-            , "label_color" .= colour
             , "entities" .= entities
             , "tiles" .= tiles
             , "version" .= version
-            ])]
+            ] ++ (case colour of
+                Just c -> ["label_color" .= c]
+                Nothing -> [])
+         )]
 
 -- |Generate the uncompressed unencoded JSON. This is not a valid blueprint as is but
 -- human-readable

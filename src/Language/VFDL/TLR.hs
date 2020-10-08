@@ -61,14 +61,27 @@ instance FromJSON Entity where
         <*> v .:? "drop_position"
         <*> v .:? "pickup_position"
 instance ToJSON Entity where
-    toJSON (Entity num name pos dir recipe t droppos pickpos) = object
+    toJSON (Entity num name pos dir recipe t droppos pickpos) = object $
         [ "entity_number" .= num
         , "name" .= name
         , "position" .= pos
-        , "direction" .= dir
-        , "recipe" .= recipe
-        , "type" .= t
-        , "drop_position" .= droppos
-        , "pickup_position" .= pickpos
-        ]
-
+        ] ++
+        case dir of 
+          Just d -> ["direction" .= d]
+          Nothing -> []
+        ++
+        case recipe of
+          Just r -> ["recipe" .= recipe]
+          Nothing -> []
+        ++
+        case t of
+          Just t -> ["type" .= t]
+          Nothing -> []
+        ++
+        case droppos of
+          Just dp -> ["drop_position" .= droppos]
+          Nothing -> []
+        ++
+        case pickpos of
+          Just pp -> ["pickup_position" .= pickpos]
+          Nothing -> []

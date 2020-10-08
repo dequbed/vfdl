@@ -73,7 +73,7 @@ mergeLayouts la@(Layout dim_a io_a m_a) lb@(Layout dim_b io_b m_b) = do
         extra_ports_a = foldl' (flip Map.delete) io_a shared_ports_a
         extra_ports_b = foldl' (flip Map.delete) io_b shared_ports_b
 
-    new_matrix <- case shared_ports_a of
+    case shared_ports_a of
       [] -> do
           -- When there are no shared ports we just glue them together
           undefined
@@ -84,11 +84,9 @@ mergeLayouts la@(Layout dim_a io_a m_a) lb@(Layout dim_b io_b m_b) = do
           fail "Not implemented yet"
           Nothing
 
-    -- TODO unionWith here but that requires the rest to understand how to treat the list of ports!
-    Just $ Layout (nrows new_matrix, ncols new_matrix) (Map.union extra_ports_a extra_ports_b) new_matrix
 
 -- The trivial connect that is very much not trivial
-trivialConnect :: Layout -> Layout -> Port -> Maybe (Matrix (Maybe TileObj))
+trivialConnect :: Layout -> Layout -> Port -> Maybe Layout
 trivialConnect (Layout dim_a io_a m_a) (Layout dim_b io_b m_b) p = do
     -- Yay for monadic application - this will return early if a `Nothing` is encountered
     source_ports <- Map.lookup p io_a
@@ -100,6 +98,10 @@ trivialConnect (Layout dim_a io_a m_a) (Layout dim_b io_b m_b) p = do
         hb = nrows m_b
         sloc = map (portLoc wa ha) source_ports
         dloc = map (portLoc wb hb) dest_ports
+        shared_ports_a = findShared io_a io_b
+        shared_ports_b = findShared io_b io_a
+        extra_ports_a = foldl' (flip Map.delete) io_a shared_ports_a
+        extra_ports_b = foldl' (flip Map.delete) io_b shared_ports_b
 
     -- FIXME: Sanity check that we didn't obstruct any other ports this way!
     if L.any (== LocRight) sloc && L.any (== LocLeft) dloc then do
@@ -138,7 +140,8 @@ trivialConnect (Layout dim_a io_a m_a) (Layout dim_b io_b m_b) p = do
                 then new_ma <|> conn_matrix outer_height outer_height_above port_a port_b <|> new_mb
                 else new_ma <|> new_mb
 
-        Just final_matrix
+        -- TODO unionWith here but that requires the rest to understand how to treat the list of ports!
+        Just $ Layout (nrows final_matrix, ncols final_matrix) (Map.union extra_ports_a extra_ports_b) final_matrix
 
     else if L.any (== LocBottom) sloc && L.any (== LocTop) dloc then do
         undefined
@@ -262,7 +265,7 @@ testLayout = do
 
         asm_wire = asm $ buildTileObj $ Entity 0 "assembling-machine-1" (Position 0 0) Nothing (Just "copper-cable") Nothing Nothing Nothing
 
-        wire = Layout 
+        wire s = Layout 
             (3,3) 
             (Map.fromList 
                 [ (("copper_plate", In),
@@ -275,7 +278,7 @@ testLayout = do
                     , Grabber $ Tile (3,2)
                     , Grabber $ Tile (3,3)
                     ])
-                , (("copper_wire", Out),
+                , ((s, Out),
                     [ Grabber $ Tile (1,1)
                     , Grabber $ Tile (1,2)
                     , Grabber $ Tile (1,3)
@@ -293,7 +296,17 @@ testLayout = do
         circuit = Layout 
             (3,3) 
             (Map.fromList 
-                [ (("copper_wire", In),
+                [ (("copper_wire_1", In),
+                    [ Grabber $ Tile (1,1)
+                    , Grabber $ Tile (1,2)
+                    , Grabber $ Tile (1,3)
+                    , Grabber $ Tile (2,1)
+                    , Grabber $ Tile (2,3)
+                    , Grabber $ Tile (3,1)
+                    , Grabber $ Tile (3,2)
+                    , Grabber $ Tile (3,3)
+                    ])
+                , (("copper_wire_2", In),
                     [ Grabber $ Tile (1,1)
                     , Grabber $ Tile (1,2)
                     , Grabber $ Tile (1,3)
@@ -326,7 +339,7 @@ testLayout = do
                 ])
             asm_circ
 
-    case mergeLayouts wire circuit of
+    case mergeLayouts (wire "copper_wire_2") =<< mergeLayouts (wire "copper_wire_1") circuit of
         Just layout -> do
             let entity_list = getEntities $ layout_matrix layout
             return $ entity_list
