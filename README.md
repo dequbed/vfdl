@@ -37,3 +37,7 @@ MIDI to programmable speaker (TODO).
 # W(hence)TF?!
 
 Do you mean "how"? In that case: magic. Pure, raw, unadultered, black magic.
+
+# I WANNA USE THIS! THIS IS COOL!
+
+It doesn't work yet. It may in the future. But it doesn't at the moment.
