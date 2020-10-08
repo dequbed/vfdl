@@ -7,6 +7,8 @@ import System.IO (hPutStrLn)
 import Data.Text (unpack)
 import Data.Text.IO (readFile)
 
+import qualified Data.Text.Lazy as TL
+
 import Language.VFDL
 
 import Banner
@@ -43,5 +45,6 @@ run (Param _ _ [f]) = do
         Left e -> hPutStrLn stdout $ show e
         Right ast -> compile ast
     -}
-    testLayout
+    ents <- testLayout
+    hPutStrLn stdout $ TL.unpack $ generateBlueprint "test" ents
 run (Param _ _ _) = hPutStrLn stdout "You need to provide exactly one input file at the moment"

@@ -5,10 +5,12 @@ module Language.VFDL.Layout
 
 import Prelude hiding ((<|>))
 
+import GHC.Float (int2Float)
 import System.IO
 import System.IO.Unsafe
 
 import Language.VFDL.Compile
+import Language.VFDL.TLR
 
 import Data.Matrix
 import Data.Tree
@@ -21,7 +23,12 @@ import qualified Data.HashMap.Strict as Map
 data Tile = Tile (Int, Int)
     deriving (Eq, Ord, Show, Generic, Hashable)
 
-type TileObj = Text
+data TileObj = TileObj
+    { tileCenter :: Bool
+    , tileEntity :: Entity
+    } deriving (Eq, Show)
+
+buildTileObj ent = TileObj False ent
 
 data Direction = In | Out
     deriving (Eq, Ord, Show, Generic, Hashable)
@@ -149,8 +156,8 @@ trivialConnect (Layout dim_a io_a m_a) (Layout dim_b io_b m_b) p = do
 
 conn_matrix :: Int -> Int -> PortKind -> PortKind -> Matrix (Maybe TileObj)
 conn_matrix n h (Grabber _) (Grabber _) =
-    let grabber = "grabber"
-    in matrix n 3 (\case (x,y) | x == 2 && y == h -> Just grabber
+    let grabber = TileObj True $ Entity 0 "inserter" (Position 0 0) (Just 4) Nothing Nothing Nothing Nothing
+    in matrix n 1 (\case (x,y) | x == 1 && y == h -> Just grabber
                          _ -> Nothing)
 
 
@@ -243,11 +250,17 @@ testSplitGraph = do
                 , Node "craft5" []]
             , Node "Balance" []]]
 
+testLayout :: IO [Entity]
 testLayout = do
     let (g, l, m) = testGraph
         tree = testSplitGraph
 
-        asm = fromList 3 3 (L.repeat $ Just "ASMMK1")
+        asm a = fromList 3 3 $ map Just $
+            [a ,a ,a
+            ,a ,a{tileCenter=True} ,a
+            ,a ,a ,a]
+
+        asm_wire = asm $ buildTileObj $ Entity 0 "assembling-machine-1" (Position 0 0) Nothing (Just "copper-cable") Nothing Nothing Nothing
 
         wire = Layout 
             (3,3) 
@@ -273,7 +286,9 @@ testLayout = do
                     , Grabber $ Tile (3,3)
                     ])
                 ])
-            asm
+            asm_wire
+
+        asm_circ = asm $ buildTileObj $ Entity 0 "assembling-machine-1" (Position 0 0) Nothing (Just "electronic-circuit") Nothing Nothing Nothing
 
         circuit = Layout 
             (3,3) 
@@ -309,6 +324,25 @@ testLayout = do
                     , Grabber $ Tile (3,3)
                     ])
                 ])
-            asm
+            asm_circ
 
-    (hPutStrLn stdout . show) $ mergeLayouts wire circuit
+    case mergeLayouts wire circuit of
+        Just layout -> do
+            let entity_list = getEntities $ layout_matrix layout
+            return $ entity_list
+        Nothing -> do
+            fail "Failed to converge layout"
+
+getEntities :: Matrix (Maybe TileObj) -> [Entity]
+getEntities = map setEntNumber . zip [1..] . foldl' getEntities' [] . mapPos setEntPos
+
+setEntPos :: ((Int, Int) -> Maybe TileObj -> Maybe TileObj)
+setEntPos (x,y) (Just (TileObj True e)) = Just $ TileObj True $ e { entityPosition = (Position (0.5 + int2Float x) (0.5 + int2Float y)) }
+setEntPos _ _ = Nothing
+
+getEntities' :: [Entity] -> Maybe TileObj -> [Entity]
+getEntities' xs (Just (TileObj True e)) = e:xs
+getEntities' xs _ = xs
+
+setEntNumber :: (Int, Entity) -> Entity
+setEntNumber (x,e) = e { entityNumber = x }
